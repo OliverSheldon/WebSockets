@@ -1,11 +1,19 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Net.WebSockets;
 using System.Text;
+using WebSockets.Models;
 
 namespace WebSockets.Controllers
 {
     public class WebSocketController : Controller
     {
+        private readonly IApiClient _client;
+
+        public WebSocketController(IApiClient client)
+        {
+            _client = client;
+        }
+
         [Route("/ws")]
         public async Task Get()
         {
@@ -19,7 +27,7 @@ namespace WebSockets.Controllers
                 HttpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
             }
         }
-        private static async Task Echo(WebSocket webSocket)
+        private async Task Echo(WebSocket webSocket)
         {
             //var buffer = new byte[1024 * 4];
             //var receiveResult = await webSocket.ReceiveAsync(
@@ -27,7 +35,8 @@ namespace WebSockets.Controllers
 
             while (true)
             {
-                var message = "Hello World";
+                string message = await _client.GetSessions();
+
                 var bytes = Encoding.UTF8.GetBytes(message);
 
                 await webSocket.SendAsync(
@@ -40,6 +49,8 @@ namespace WebSockets.Controllers
                 {
                     break;
                 }
+
+                await Task.Delay(10000);
 
                 //receiveResult = await webSocket.ReceiveAsync(
                 //    new ArraySegment<byte>(buffer), CancellationToken.None);
