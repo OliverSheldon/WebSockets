@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Net.WebSockets;
+using System.Text;
 
 namespace WebSockets.Controllers
 {
@@ -20,25 +21,33 @@ namespace WebSockets.Controllers
         }
         private static async Task Echo(WebSocket webSocket)
         {
-            var buffer = new byte[1024 * 4];
-            var receiveResult = await webSocket.ReceiveAsync(
-                new ArraySegment<byte>(buffer), CancellationToken.None);
+            //var buffer = new byte[1024 * 4];
+            //var receiveResult = await webSocket.ReceiveAsync(
+            //    new ArraySegment<byte>(buffer), CancellationToken.None);
 
-            while (!receiveResult.CloseStatus.HasValue)
+            while (true)
             {
+                var message = "Hello World";
+                var bytes = Encoding.UTF8.GetBytes(message);
+
                 await webSocket.SendAsync(
-                    new ArraySegment<byte>(buffer, 0, receiveResult.Count),
-                    receiveResult.MessageType,
-                    receiveResult.EndOfMessage,
+                    new ArraySegment<byte>(bytes, 0, bytes.Length),
+                    WebSocketMessageType.Text,
+                    true,
                     CancellationToken.None);
 
-                receiveResult = await webSocket.ReceiveAsync(
-                    new ArraySegment<byte>(buffer), CancellationToken.None);
+                if(webSocket.State == WebSocketState.Closed || webSocket.State == WebSocketState.Aborted)
+                {
+                    break;
+                }
+
+                //receiveResult = await webSocket.ReceiveAsync(
+                //    new ArraySegment<byte>(buffer), CancellationToken.None);
             }
 
             await webSocket.CloseAsync(
-                receiveResult.CloseStatus.Value,
-                receiveResult.CloseStatusDescription,
+                WebSocketCloseStatus.Empty,
+                string.Empty,
                 CancellationToken.None);
         }
     }
